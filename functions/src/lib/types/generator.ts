@@ -34,18 +34,7 @@ export type MockupRequestBody = {
   resized_design: string;
 };
 
-export type MockupTypes =
-  | "dad"
-  | "trucker"
-  | "retro_trucker"
-  | "snapback"
-  | "mid_profile"
-  | "high_profile"
-  | "low_profile"
-  | "foam_trucker"
-  | "flat_bill"
-  | "structured"
-  | "relaxed";
+export type MockupTypes = "hoodie_lane_7" | "shirt_gilden";
 
 export type ProductCreateReqBody = {
   domain: string;
