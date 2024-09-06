@@ -58,3 +58,21 @@ export const apparel_blanks: ApparelDataType = {
     },
   },
 };
+
+export type HoodieStringDataType = {
+  [key in MockupTypes]: {[key: string]: any};
+};
+
+export const hoodie_strings: HoodieStringDataType = {
+  shirt_gilden: {},
+  hoodie_lane_7: {
+    WHITE:
+      "https://cdn.shopify.com/s/files/1/0731/7048/5544/files/draw_v3.png?v=1688067867",
+    BLACK:
+      "https://cdn.shopify.com/s/files/1/0731/7048/5544/files/black_drawstrings.png?v=1688134642",
+    GREEN:
+      "https://cdn.shopify.com/s/files/1/0731/7048/5544/files/green_drawstring_v2.png?v=1688133017",
+    BLUE: "https://cdn.shopify.com/s/files/1/0731/7048/5544/files/navy_drawstrings.png?v=1688134642",
+    GRAY: "https://cdn.shopify.com/s/files/1/0731/7048/5544/files/hgrey_drawstrings.png?v=1688138126",
+  },
+};

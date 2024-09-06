@@ -44,6 +44,10 @@ export type MockupDimensions = {
   original_height_back: number;
   resized_height_back: number;
   resized_width_back: number;
+  original_width_sleeve: number;
+  original_height_sleeve: number;
+  resized_height_sleeve: number;
+  resized_width_sleeve: number;
   blank_width: number;
   blank_height: number;
 };

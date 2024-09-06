@@ -3,6 +3,7 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as sharp from "sharp";
 import {apparel_blanks} from "../data/apparel";
+import {COMPOSITE_DIMENSIONS, RESIZE_DIMENSIONS} from "../constants";
 
 /**
  * Generates mockups based on the provided design request body.
@@ -32,9 +33,24 @@ export const generateMockups = async (
       return null;
     }
 
-    console.log({TOP: resizedDesign[0].top, LEFT: resizedDesign[0].left});
+    if (
+      design.type.includes("shirt") &&
+      side == "FRONT" &&
+      design.design_urls.sleeve !== ""
+    ) {
+      const sleeveDesign = await fetchAndResizeSleeveDesign(design);
+      if (sleeveDesign) resizedDesign.push(sleeveDesign);
+    }
+    if (design.type.includes("hoodie") && side == "FRONT") {
+      const sleeveDesign = await fetchAndResizeSleeveDesign(design);
+      if (sleeveDesign) resizedDesign.push(sleeveDesign);
+    }
 
-    const compositeImage = await compositeImages(blankImage, resizedDesign);
+    const compositeImage = await compositeImages(
+      blankImage,
+      resizedDesign,
+      design.type,
+    );
     if (!compositeImage) {
       functions.logger.error("500 - Failed to composite images");
       return null;
@@ -109,32 +125,27 @@ async function fetchAndResizeDesign(
     const designBuffer = Buffer.from(await designResponse.arrayBuffer());
     const resizedDesignBuffer = await sharp(designBuffer)
       .resize(
-        Math.round(dimension[`resized_width_${s}`] * 3.8),
-        Math.round(dimension[`resized_height_${s}`] * 3.8),
+        Math.round(
+          dimension[`resized_width_${s}`] * RESIZE_DIMENSIONS[type][side].width,
+        ),
+        Math.round(
+          dimension[`resized_height_${s}`] *
+            RESIZE_DIMENSIONS[type][side].height,
+        ),
       )
       .toBuffer();
-
-    console.log({
-      w: dimension[`resized_width_${s}`],
-      h: dimension[`resized_height_${s}`],
-    });
-
-    /* eslint-disable indent */
-    const top =
-      type == "hoodie_lane_7" ? 435 : type == "shirt_gilden" ? 355 : 355;
-    /* eslint-enable indent */
-
-    console.log({
-      top,
-      top_P: position[`top_${s}`],
-      left: position[`left_${s}`],
-    });
 
     return [
       {
         input: resizedDesignBuffer,
-        top: Math.round(position[`top_${s}`] * 4) + top,
-        left: Math.round(position[`left_${s}`] * 3.8) + 550,
+        top:
+          Math.round(
+            position[`top_${s}`] * RESIZE_DIMENSIONS[type][side].top_m,
+          ) + RESIZE_DIMENSIONS[type][side].top,
+        left:
+          Math.round(
+            position[`left_${s}`] * RESIZE_DIMENSIONS[type][side].left_m,
+          ) + RESIZE_DIMENSIONS[type][side].left,
       },
     ];
   } catch (error) {
@@ -142,6 +153,104 @@ async function fetchAndResizeDesign(
     return null;
   }
 }
+
+/**
+ * Calculates the offset for sleeve positioning based on the sleeve side and resized dimensions.
+ * @param sleeveSide 'LEFT' or 'RIGHT'
+ * @param dimension The dimension object containing width and height.
+ * @param type The type of the mockup.
+ * @returns Calculated offset for the left position.
+ */
+function calculateOffset(
+  sleeveSide: string,
+  dimension: {resized_width_sleeve: number},
+  type: MockupTypes,
+): number {
+  const baseOffset = sleeveSide === "LEFT" ? 75 : 1515;
+  return (
+    baseOffset +
+    Math.round(
+      ((80 - dimension.resized_width_sleeve) / 2) *
+        RESIZE_DIMENSIONS[type].FRONT.width,
+    )
+  );
+}
+
+/**
+ * Fetches and resizes a sleeve design based on specified dimensions and type.
+ *
+ * @param {MockupRequestBody} design - The design specifications including URLs, dimensions, type, and sleeve side.
+ * @returns {Promise<{input: Buffer, top: number, left: number} | null>} A promise that resolves with the resized and repositioned sleeve design
+ * or null in case of an error.
+ *
+ */
+export const fetchAndResizeSleeveDesign = async (design: MockupRequestBody) => {
+  const {design_urls, sleeve_side, dimension, type} = design;
+
+  try {
+    const response = await fetch(design_urls.sleeve);
+    if (!response.ok) {
+      console.error(
+        "Failed to fetch sleeve design image:",
+        response.statusText,
+      );
+      return null;
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    const designImage = sharp(Buffer.from(imageBuffer));
+
+    const rotationAngle = sleeve_side === "LEFT" ? 27 : -28;
+    const sleeveResizedDesignBuffer = await designImage
+      .resize(
+        Math.round(
+          dimension.resized_width_sleeve * RESIZE_DIMENSIONS[type].FRONT.width,
+        ),
+        Math.round(
+          dimension.resized_height_sleeve *
+            RESIZE_DIMENSIONS[type].FRONT.height,
+        ),
+      )
+      .rotate(rotationAngle, {background: {r: 0, g: 0, b: 0, alpha: 0}})
+      .toBuffer();
+
+    const topOffset =
+      545 +
+      Math.round(
+        ((50 - dimension.resized_height_sleeve) / 2) *
+          RESIZE_DIMENSIONS[type].FRONT.width,
+      );
+
+    return {
+      input: sleeveResizedDesignBuffer,
+      top: topOffset,
+      left: calculateOffset(sleeve_side, dimension, type),
+    };
+  } catch (error) {
+    console.error("Error in fetchAndResizeSleeveDesign:", error);
+    return null;
+  }
+};
+
+// export const fetchAndResizeHoodieString = async (design: MockupRequestBody, color: string) => {
+//   const hoodie_string = hoodie_strings[design.type][color.toLocaleUpperCase()];
+//   const hoodie_string_response = await fetch(hoodie_string);
+//   if (!hoodie_string_response.ok) {
+//     throw new Error("Failed to fetch hoodie string image");
+//   }
+
+//   const hoodieStringBuffer = Buffer.from(await hoodie_string_response.arrayBuffer());
+//   const hoodieStringBufferImage = await sharp(hoodieStringBuffer);
+
+//   // Resize the hoodie strings proportionally
+//   const stringResizedDesignBuffer = await hoodieStringBufferImage.resize(1950, 2560).toBuffer();
+
+//   // Composite the strings onto the mockup
+//   finalImageBuffer = await sharp(finalImageBuffer)
+//       .composite([{ input: stringResizedDesignBuffer }])
+//       .toBuffer();
+
+// };
 
 /**
  * Composites the blank image and the resized design image.
@@ -154,13 +263,14 @@ async function fetchAndResizeDesign(
 async function compositeImages(
   blank_image_buffer: Buffer,
   compositing_array: {input: Buffer; top: number; left: number}[],
+  type: MockupTypes,
 ): Promise<Buffer | null> {
-  const maxWidth = 1950;
-  const maxHeight = 2301;
-
   try {
     const compositeBuffer = await sharp(blank_image_buffer)
-      .resize(maxWidth, maxHeight)
+      .resize(
+        COMPOSITE_DIMENSIONS[type].width,
+        COMPOSITE_DIMENSIONS[type].height,
+      )
       .composite(compositing_array)
       .toBuffer();
 
