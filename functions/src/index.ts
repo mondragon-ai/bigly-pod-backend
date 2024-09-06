@@ -1,19 +1,23 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+// Import Functions
+import {gdpr} from "./app/gdpr/index";
+import {store} from "./app/store/index";
+import {fulfillment} from "./app/fulfillment/index"; // DOUBLE CHECK
+import {generate} from "./app/generator/index"; // DOUBLE CHECK
 
-import {onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+// Export Functions
+export {gdpr, store, fulfillment, generate};
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+// Import Triggers
+import {orderCreated} from "./triggers/orders";
+import {productCreated} from "./triggers/products";
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// Export Triggers
+export {orderCreated, productCreated}; // DOUBLE CHECK
+
+// Import Pub/Sub
+import {orderComplete} from "./pubsub/orderComplete"; // DOUBLE CHECK
+import {podFulfilled} from "./pubsub/fulfilled"; // DOUBLE CHECK
+import {shopUpdate} from "./pubsub/shopUpdate"; // DOUBLE CHECK
+
+// Export Pub/Sub
+export {orderComplete, podFulfilled, shopUpdate};

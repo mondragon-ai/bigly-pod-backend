@@ -3,6 +3,7 @@ import {MockupRequestBody} from "../../../lib/types/generator";
 import {createSubcollectionDocument} from "../../../database/firestore";
 import {createDesignPayload} from "../../../lib/payloads/mockups";
 import {generateMockups} from "../../../lib/helpers/mockups";
+import {MockupUrls} from "../../../lib/types/mockups";
 
 /**
  * Logs and handles errors in a consistent way.
@@ -20,7 +21,7 @@ type ProcessDesignReturnType = {
   ok: boolean;
   text: string;
   mockups: {
-    urls: {url: string; alt: string}[];
+    urls: {front: MockupUrls[]; back: MockupUrls[]};
     design_id: string;
   } | null;
   error: boolean;
@@ -48,12 +49,17 @@ export async function processDesign(
     }
 
     // Generate mockup images
-    const handleMockupGenorator = async (): Promise<
-      {url: string; alt: string}[]
-    > => {
+    const handleMockupGenorator = async (
+      side: "FRONT" | "BACK",
+    ): Promise<{url: string; alt: string}[]> => {
       const mockups = await Promise.all(
         design.colors.map(async (color) => {
-          return await generateMockups(design, color.toLowerCase(), domain);
+          return await generateMockups(
+            design,
+            color.toLowerCase(),
+            side,
+            domain,
+          );
         }),
       );
 
@@ -62,8 +68,21 @@ export async function processDesign(
         (mockup): mockup is {url: string; alt: string} => mockup !== null,
       );
     };
-    const mockups: {url: string; alt: string}[] = await handleMockupGenorator();
-    if (!mockups || mockups.length <= 0) {
+
+    let front: MockupUrls[] = [];
+    let back: MockupUrls[] = [];
+    for (var side of design.sides) {
+      if (side === "FRONT") {
+        front = await handleMockupGenorator(side);
+      } else {
+        back = await handleMockupGenorator(side);
+      }
+    }
+
+    if (
+      (design.sides.includes("FRONT") && front.length == 0) ||
+      (design.sides.includes("BACK") && back.length == 0)
+    ) {
       return {
         status: 400,
         ok: false,
@@ -74,7 +93,13 @@ export async function processDesign(
     }
 
     // Create design data payload
-    const payload = await createDesignPayload(design, domain, shpat, mockups);
+    const payload = await createDesignPayload(
+      design,
+      domain,
+      shpat,
+      front,
+      back,
+    );
 
     // Store the design data in the database
     const {status} = await createSubcollectionDocument(
@@ -93,7 +118,8 @@ export async function processDesign(
         status < 300
           ? "🎉 [SUCCESS]: Design successfully uploaded"
           : " 🚨 [ERROR]: Problems fetching images & saving design",
-      mockups: status < 300 ? {urls: mockups, design_id: payload.id} : null,
+      mockups:
+        status < 300 ? {urls: {front, back}, design_id: payload.id} : null,
       error: true,
     };
   } catch (error) {
@@ -122,7 +148,7 @@ function validateDesignInput(
   domain: string,
   shpat: string,
 ): ProcessDesignReturnType | null {
-  if (!design.base_sku || !design.design_url) {
+  if (!design.base_sku || !design.design_urls) {
     return {
       status: 422,
       ok: false,

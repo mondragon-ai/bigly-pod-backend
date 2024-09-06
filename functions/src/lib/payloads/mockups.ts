@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
-import {MockupDocument} from "../types/mockups";
+import {MockupDocument, MockupUrls} from "../types/mockups";
 import {encryptMsg} from "../../utils/encryption";
-import {MockupRequestBody} from "../types/generator";
+import {MockupBrands, MockupRequestBody} from "../types/generator";
 import {generateRandomID} from "../../utils/generator";
 
 /**
@@ -19,7 +19,8 @@ export const createDesignPayload = async (
   design: MockupRequestBody,
   domain: string,
   shpat: string,
-  mockup_urls: {url: string; alt: string}[],
+  front: MockupUrls[],
+  back: MockupUrls[],
 ): Promise<MockupDocument> => {
   try {
     const encryptedShpat = await encryptMsg(shpat);
@@ -39,9 +40,12 @@ export const createDesignPayload = async (
       sizes,
       dimension,
       position,
-      design_url,
+      design_urls,
       type,
       cost,
+      sleeve_side,
+      is_shirt,
+      front_is_main,
     } = design;
 
     return {
@@ -51,29 +55,23 @@ export const createDesignPayload = async (
       title,
       colors,
       sizes,
-      mockup_urls,
+      mockup_urls: {front, back},
       created_at: currentTime,
       updated_at: currentTime,
       status: "ACTIVE",
       id: desUid,
       shop_name: domain.split(".")[0],
-      design_url: design_url || "",
-      type: type,
+      design_urls,
+      type,
       cost,
       state: new Date().getTime(),
-      dimension: {
-        original_width: dimension.original_width || 0,
-        original_height: dimension.original_height || 0,
-        resized_height: dimension.resized_height || 0,
-        resized_width: dimension.resized_width || 0,
-        blank_width: dimension.blank_width || 0,
-        blank_height: dimension.blank_height || 0,
-      },
-      position: {
-        top: position.top || 0,
-        left: position.left || 0,
-      },
+      dimension: dimension,
+      position: position,
       product_id: "",
+      is_shirt,
+      front_is_main,
+      brand: type.split("_").slice(1).join("_") as MockupBrands,
+      sleeve_side: sleeve_side,
     };
   } catch (error) {
     console.error("Error in createDesignPayload:", error);

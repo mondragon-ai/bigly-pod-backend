@@ -44,7 +44,6 @@ export const createFulfillmentService = async (
       shop,
       accessToken,
     );
-    console.log({fulfillmentData});
 
     if (!fulfillmentData) {
       const existingService = await findExistingFulfillmentService(

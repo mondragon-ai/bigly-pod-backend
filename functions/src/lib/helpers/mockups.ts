@@ -1,5 +1,4 @@
 import {MockupRequestBody, MockupTypes} from "../types/generator";
-import {MockupDimensions, MockupPosition} from "../types/mockups";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as sharp from "sharp";
@@ -17,21 +16,17 @@ import {apparel_blanks} from "../data/apparel";
 export const generateMockups = async (
   design: MockupRequestBody,
   color: string,
+  side: "FRONT" | "BACK",
   domain: string,
 ): Promise<{url: string; alt: string} | null> => {
   try {
-    const blankImage = await fetchBlankImage(design.type, color);
+    const blankImage = await fetchBlankImage(design.type, color, side);
     if (!blankImage) {
       functions.logger.error("404 - Blank image not found");
       return null;
     }
 
-    const resizedDesign = await fetchAndResizeDesign(
-      design.design_url,
-      design.dimension,
-      design.position,
-      design.type,
-    );
+    const resizedDesign = await fetchAndResizeDesign(design, side);
     if (!resizedDesign) {
       functions.logger.error("400 - Failed to fetch or resize design image");
       return null;
@@ -60,17 +55,19 @@ export const generateMockups = async (
  * Fetches the blank image for the given base type.
  *
  * @async
- * @param {MockupTypes} type - The type of hat.
+ * @param {MockupTypes} type - The type of apparel.
  * @param {string} color - The color of hat mockups.
  * @returns {Promise<Buffer | null>} A promise that resolves to the Buffer of the blank image or null if not found.
  */
 async function fetchBlankImage(
   type: MockupTypes,
   color: string,
+  side: "FRONT" | "BACK",
 ): Promise<Buffer | null> {
   // console.log({color, type});
   try {
-    const mockup_url = apparel_blanks[type][color.toLocaleUpperCase()];
+    const mockup_url =
+      apparel_blanks[type][side.toLocaleLowerCase()][color.toLocaleUpperCase()];
     const response = await fetch(mockup_url);
     if (!response.ok) {
       throw new Error(
@@ -90,19 +87,18 @@ async function fetchBlankImage(
  * Fetches and resizes the design image based on the provided dimensions.
  *
  * @async
- * @param {string} design_url - The URL of the design image.
- * @param {MockupDimensions} dimensions - The dimensions for resizing the design image.
- * @param {MockupPosition} position - The position for placing the resized design image.
+ * @param {MockupRequestBody} design - The design Object.
+ * @param { "FRONT" | "BACK"} side - The design Object.
  * @returns {Promise<{ input: Buffer; top: number; left: number }[] | null>} A promise that resolves to an array
  */
 async function fetchAndResizeDesign(
-  design_url: string,
-  dimensions: MockupDimensions,
-  position: MockupPosition,
-  type: MockupTypes,
+  design: MockupRequestBody,
+  side: "FRONT" | "BACK",
 ): Promise<{input: Buffer; top: number; left: number}[] | null> {
+  const {design_urls, dimension, type, position} = design;
+  const s = side.toLocaleLowerCase() as "front" | "back";
   try {
-    const designResponse = await fetch(design_url);
+    const designResponse = await fetch(design_urls[s]);
     if (!designResponse.ok) {
       throw new Error("Failed to fetch design image");
     }
@@ -110,8 +106,8 @@ async function fetchAndResizeDesign(
     const designBuffer = Buffer.from(await designResponse.arrayBuffer());
     const resizedDesignBuffer = await sharp(designBuffer)
       .resize(
-        Math.round(dimensions.resized_width * 2.00668896324),
-        Math.round(dimensions.resized_height * 2.00668896324),
+        Math.round(dimension[`resized_width_${s}`] * 2.00668896324),
+        Math.round(dimension[`resized_height_${s}`] * 2.00668896324),
       )
       .toBuffer();
 
@@ -123,8 +119,8 @@ async function fetchAndResizeDesign(
     return [
       {
         input: resizedDesignBuffer,
-        top: Math.round(position.top * 1.65) + top,
-        left: Math.round(position.left * 1.9) + 220,
+        top: Math.round(position[`top_${s}`] * 1.65) + top,
+        left: Math.round(position[`left_${s}`] * 1.9) + 220,
       },
     ];
   } catch (error) {

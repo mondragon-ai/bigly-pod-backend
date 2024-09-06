@@ -1,7 +1,7 @@
 import * as express from "express";
 import * as functions from "firebase-functions";
 import {MockupRequestBody} from "../../../lib/types/generator";
-import {processDesign} from "../services/mockups";
+// import {processDesign} from "../services/mockups";
 
 /**
  * Handle Mockups generator
@@ -17,11 +17,14 @@ export const handleMockupGenerator = async (
   const {domain, shpat} = req.params;
   functions.logger.info(" 🎨 [MOCKUPS] - Handle Mockups");
 
-  const {status, text, mockups, error} = await processDesign(
-    design,
-    domain,
-    shpat,
-  );
+  console.log({domain, shpat});
+  console.log({design});
 
-  res.status(status).json({text, mockups, error});
+  // const {status, text, mockups, error} = await processDesign(
+  //   design,
+  //   domain,
+  //   shpat,
+  // );
+
+  res.status(200).json({text: "", mockups: design, error: null});
 };

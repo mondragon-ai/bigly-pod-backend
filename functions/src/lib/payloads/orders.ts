@@ -209,7 +209,7 @@ export const buildPODLineItemPayload = (
     weight: 0,
     cost: 0,
     image: "",
-    type: "dad",
+    type: "hoodie_lane_7",
     merchant_variants_id: "",
   };
 
