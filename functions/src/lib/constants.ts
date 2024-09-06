@@ -34,7 +34,7 @@ export const RESIZE_DIMENSIONS: DIMENSIONS = {
       top: 720,
       left: 530,
       top_m: 3.95,
-      left_m: 4.1,
+      left_m: 4.5,
     },
   },
 };

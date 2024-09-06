@@ -2,7 +2,7 @@ import {MockupRequestBody, MockupTypes} from "../types/generator";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as sharp from "sharp";
-import {apparel_blanks} from "../data/apparel";
+import {apparel_blanks, hoodie_strings} from "../data/apparel";
 import {COMPOSITE_DIMENSIONS, RESIZE_DIMENSIONS} from "../constants";
 
 /**
@@ -41,22 +41,36 @@ export const generateMockups = async (
       const sleeveDesign = await fetchAndResizeSleeveDesign(design);
       if (sleeveDesign) resizedDesign.push(sleeveDesign);
     }
-    if (design.type.includes("hoodie") && side == "FRONT") {
-      const sleeveDesign = await fetchAndResizeSleeveDesign(design);
-      if (sleeveDesign) resizedDesign.push(sleeveDesign);
-    }
 
-    const compositeImage = await compositeImages(
+    let compositeImageBuffer = await compositeImages(
       blankImage,
       resizedDesign,
       design.type,
     );
-    if (!compositeImage) {
+    if (!compositeImageBuffer) {
       functions.logger.error("500 - Failed to composite images");
       return null;
     }
 
-    const mockupUrls = await uploadMockupsToGCP(compositeImage, domain, color);
+    if (design.type.includes("hoodie") && side == "FRONT") {
+      compositeImageBuffer = await fetchAndResizeHoodieString(
+        design,
+        color,
+        compositeImageBuffer,
+      );
+    }
+    if (!compositeImageBuffer) {
+      functions.logger.error(
+        "500 - Failed to composite [hoodies string] images",
+      );
+      return null;
+    }
+
+    const mockupUrls = await uploadMockupsToGCP(
+      compositeImageBuffer,
+      domain,
+      color,
+    );
     if (!mockupUrls) {
       functions.logger.error("500 - Failed to upload mockups");
       return null;
@@ -232,25 +246,41 @@ export const fetchAndResizeSleeveDesign = async (design: MockupRequestBody) => {
   }
 };
 
-// export const fetchAndResizeHoodieString = async (design: MockupRequestBody, color: string) => {
-//   const hoodie_string = hoodie_strings[design.type][color.toLocaleUpperCase()];
-//   const hoodie_string_response = await fetch(hoodie_string);
-//   if (!hoodie_string_response.ok) {
-//     throw new Error("Failed to fetch hoodie string image");
-//   }
+/**
+ * Fetches, resizes, and composites a hoodie string image onto a given mockup.
+ *
+ * @param {MockupRequestBody} design - The design specifications including the type of the hoodie.
+ * @param {string} color - The color of the hoodie string to fetch.
+ * @param {Buffer} composite_buffer - The image buffer onto which the hoodie string image will be composited.
+ * @returns {Promise<Buffer>} A promise that resolves with the new image buffer after compositing the resized hoodie string.
+ *
+ */
+export const fetchAndResizeHoodieString = async (
+  design: MockupRequestBody,
+  color: string,
+  composite_buffer: Buffer,
+) => {
+  const hoodie_string = hoodie_strings[design.type][color.toLocaleUpperCase()];
+  const hoodie_string_response = await fetch(hoodie_string);
+  if (!hoodie_string_response.ok) {
+    throw new Error("Failed to fetch hoodie string image");
+  }
 
-//   const hoodieStringBuffer = Buffer.from(await hoodie_string_response.arrayBuffer());
-//   const hoodieStringBufferImage = await sharp(hoodieStringBuffer);
+  const hoodieStringBuffer = Buffer.from(
+    await hoodie_string_response.arrayBuffer(),
+  );
+  const hoodieStringBufferImage = await sharp(hoodieStringBuffer);
 
-//   // Resize the hoodie strings proportionally
-//   const stringResizedDesignBuffer = await hoodieStringBufferImage.resize(1950, 2560).toBuffer();
+  // Resize the hoodie strings proportionally
+  const stringResizedDesignBuffer = await hoodieStringBufferImage
+    .resize(1950, 2560)
+    .toBuffer();
 
-//   // Composite the strings onto the mockup
-//   finalImageBuffer = await sharp(finalImageBuffer)
-//       .composite([{ input: stringResizedDesignBuffer }])
-//       .toBuffer();
-
-// };
+  // Composite the strings onto the mockup
+  return await sharp(composite_buffer)
+    .composite([{input: stringResizedDesignBuffer}])
+    .toBuffer();
+};
 
 /**
  * Composites the blank image and the resized design image.
