@@ -54,6 +54,7 @@ export async function processDesign(
     ): Promise<{url: string; alt: string}[]> => {
       const mockups = await Promise.all(
         design.colors.map(async (color) => {
+          console.log({START: side, COLOR: color});
           return await generateMockups(
             design,
             color.toLowerCase(),

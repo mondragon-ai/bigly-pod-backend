@@ -1,4 +1,5 @@
 import {MockupTypes} from "./generator";
+import {MockupUrls} from "./mockups";
 
 export type ProductDocument = {
   type: MockupTypes;
@@ -11,7 +12,7 @@ export type ProductDocument = {
   status: "ACTIVE" | "DEACTIVE";
   base_sku: string;
   title: string;
-  mockup_urls: {url: string; alt: string}[];
+  mockup_urls: {front: MockupUrls[]; back: MockupUrls[]};
   options: {
     options1: string[];
     options2: string[];

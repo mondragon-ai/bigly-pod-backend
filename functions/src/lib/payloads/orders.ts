@@ -202,7 +202,13 @@ export const buildPODLineItemPayload = (
   color: string,
   quantity: number,
 ) => {
-  const images = product.mockup_urls;
+  /* eslint-disable indent */
+  const images =
+    product.mockup_urls.front.length > 0
+      ? product.mockup_urls.front
+      : product.mockup_urls.back.length > 0
+      ? product.mockup_urls.back
+      : [];
   let pod_item: PODLineItemsProps = {
     variant_id: "",
     quantity: 0,
@@ -212,6 +218,7 @@ export const buildPODLineItemPayload = (
     type: "hoodie_lane_7",
     merchant_variants_id: "",
   };
+  /* eslint-enable indent */
 
   /* eslint-disable indent */
   for (const vars of product.merged_variants) {

@@ -34,7 +34,11 @@ export const findVariantsInDB = async (
       const productData = data as ProductDocument;
 
       const images =
-        productData.mockup_urls.length > 0 ? productData.mockup_urls : [];
+        productData.mockup_urls.front.length > 0
+          ? productData.mockup_urls.front
+          : productData.mockup_urls.back.length > 0
+          ? productData.mockup_urls.back
+          : [];
 
       // Check if the variant_id exists in the merged_variants array
       for (const vars of productData.merged_variants) {

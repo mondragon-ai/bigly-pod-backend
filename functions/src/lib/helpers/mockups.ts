@@ -32,6 +32,8 @@ export const generateMockups = async (
       return null;
     }
 
+    console.log({TOP: resizedDesign[0].top, LEFT: resizedDesign[0].left});
+
     const compositeImage = await compositeImages(blankImage, resizedDesign);
     if (!compositeImage) {
       functions.logger.error("500 - Failed to composite images");
@@ -68,6 +70,7 @@ async function fetchBlankImage(
   try {
     const mockup_url =
       apparel_blanks[type][side.toLocaleLowerCase()][color.toLocaleUpperCase()];
+    console.log({mockup_url});
     const response = await fetch(mockup_url);
     if (!response.ok) {
       throw new Error(
@@ -106,21 +109,32 @@ async function fetchAndResizeDesign(
     const designBuffer = Buffer.from(await designResponse.arrayBuffer());
     const resizedDesignBuffer = await sharp(designBuffer)
       .resize(
-        Math.round(dimension[`resized_width_${s}`] * 2.00668896324),
-        Math.round(dimension[`resized_height_${s}`] * 2.00668896324),
+        Math.round(dimension[`resized_width_${s}`] * 3.8),
+        Math.round(dimension[`resized_height_${s}`] * 3.8),
       )
       .toBuffer();
 
+    console.log({
+      w: dimension[`resized_width_${s}`],
+      h: dimension[`resized_height_${s}`],
+    });
+
     /* eslint-disable indent */
     const top =
-      type == "hoodie_lane_7" ? 435 : type == "shirt_gilden" ? 300 : 325;
+      type == "hoodie_lane_7" ? 435 : type == "shirt_gilden" ? 355 : 355;
     /* eslint-enable indent */
+
+    console.log({
+      top,
+      top_P: position[`top_${s}`],
+      left: position[`left_${s}`],
+    });
 
     return [
       {
         input: resizedDesignBuffer,
-        top: Math.round(position[`top_${s}`] * 1.65) + top,
-        left: Math.round(position[`left_${s}`] * 1.9) + 220,
+        top: Math.round(position[`top_${s}`] * 4) + top,
+        left: Math.round(position[`left_${s}`] * 3.8) + 550,
       },
     ];
   } catch (error) {
@@ -141,9 +155,12 @@ async function compositeImages(
   blank_image_buffer: Buffer,
   compositing_array: {input: Buffer; top: number; left: number}[],
 ): Promise<Buffer | null> {
+  const maxWidth = 1950;
+  const maxHeight = 2301;
+
   try {
     const compositeBuffer = await sharp(blank_image_buffer)
-      .resize(1200, 1200)
+      .resize(maxWidth, maxHeight)
       .composite(compositing_array)
       .toBuffer();
 

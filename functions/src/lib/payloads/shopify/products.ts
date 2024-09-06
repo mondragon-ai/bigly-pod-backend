@@ -88,12 +88,14 @@ export const generateShopifyProductImageList = (
     images.push({src, alt, id: Number(generateRandomID(""))});
   };
 
-  mockup.mockup_urls.forEach((img) => {
+  mockup.mockup_urls[mockup.front_is_main ? "front" : "back"].forEach((img) => {
     pushImage(img.url, img.alt);
   });
 
-  if (mockup.design_url !== "") {
-    pushImage(mockup.design_url, "DESIGN");
+  for (const design_url of Object.entries(mockup.design_urls)) {
+    if (design_url[1] !== "") {
+      pushImage(design_url[1], `${design_url[0]}_design`);
+    }
   }
 
   return images;
