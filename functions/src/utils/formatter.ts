@@ -1,3 +1,5 @@
+import {MockupSizeTypes} from "../lib/types/generator";
+
 /**
  * Converts full color names into standardized abbreviations suitable for SKUs.
  *
@@ -120,5 +122,18 @@ export const convertColorForSKu = (option: string) => {
         : String(r).toLocaleUpperCase();
     /* eslint-enable indent */
     return `${left}-${right}`;
+  }
+};
+
+export const convertSizeForSKU = (size: MockupSizeTypes) => {
+  switch (size) {
+    case "SMALL":
+      return "S";
+    case "MEDIUM":
+      return "M";
+    case "LARGE":
+      return "L";
+    default:
+      return size;
   }
 };

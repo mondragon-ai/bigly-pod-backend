@@ -9,7 +9,7 @@ export type OrderDocument = {
   timezone: string;
   access_token: string;
   location_id: number | string;
-  fulfillment_status: "ACTIVE" | "DEACTIVE";
+  fulfillment_status: "ACTIVE" | "PENDING" | "CANCELLED";
   tracking_number: string;
   pod_line_items: PODLineItemsProps[];
   customer: {

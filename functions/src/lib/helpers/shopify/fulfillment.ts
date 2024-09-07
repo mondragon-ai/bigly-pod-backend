@@ -81,7 +81,7 @@ const initializeFulfillmentService = async (
 ): Promise<FulfillmentServiceResponse> => {
   const data = {
     fulfillment_service: {
-      name: "BiglyPOD Solutions",
+      name: "BiglyPOD Fulfillment",
       callback_url:
         "https://us-central1-pod-bigly.cloudfunctions.net/fulfillment/fulfillment_order_notification",
       inventory_management: false,
@@ -122,7 +122,7 @@ const findExistingFulfillmentService = async (
   )) as ShopifyFSResponse;
 
   const service = response.fulfillment_services?.find(
-    (f) => f.name === "BiglyPOD Solutions",
+    (f) => f.name === "BiglyPOD Fulfillment",
   );
 
   return {

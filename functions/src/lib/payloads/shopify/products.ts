@@ -6,8 +6,8 @@ import {
 } from "../../types/shopify/products";
 import {MockupDocument} from "../../types/mockups";
 import {generateRandomID} from "../../../utils/generator";
-import {convertColorForSKu} from "../../../utils/formatter";
-import {apparel_blanks} from "../../data/apparel";
+import {convertColorForSKu, convertSizeForSKU} from "../../../utils/formatter";
+import {MockupSizeTypes} from "../../types/generator";
 
 /**
  * Generates a SKU string based on the mockup data.
@@ -42,14 +42,31 @@ export const generateShopifyProductVariants = (
   mockup: MockupDocument,
   is_pod: boolean,
 ): ShopifyVariants[] => {
+  const {is_shirt, design_urls} = mockup;
   const variants: ShopifyVariants[] = [];
   const SKU = generateSKU(mockup);
-  const cost = Number(apparel_blanks[mockup.type].cost);
-  console.log({cost});
+  const has_sleeve = design_urls.sleeve !== "";
+  const has_back = design_urls.back !== "";
+  const has_front = design_urls.front !== "";
 
   if (mockup.colors && mockup.colors.length > 0) {
-    mockup.sizes.forEach((size) => {
-      mockup.colors.forEach((color) => {
+    for (const size of mockup.sizes) {
+      const weight = calculateShopifyVariantWeight(is_shirt, size);
+      for (const color of mockup.colors) {
+        if (
+          (size == "4XL" && is_shirt && color == "GREEN") ||
+          (size == "5XL" && is_shirt && color == "GREEN") ||
+          (size == "5XL" && is_shirt && color == "BLUE")
+        ) {
+          continue;
+        }
+        const cost = calculateShopifyVariantCost(
+          is_shirt,
+          has_sleeve,
+          has_front,
+          has_back,
+          color,
+        );
         variants.push({
           option1: size || "",
           option2: convertColorForSKu(color) || "",
@@ -57,16 +74,16 @@ export const generateShopifyProductVariants = (
           price: is_pod
             ? Number(Math.floor(cost).toFixed(2))
             : Number(Math.floor(cost * 2.5).toFixed(2)),
-          sku: SKU + `-${convertColorForSKu(color)}`,
-          weight: 85,
+          sku: SKU + `-${convertSizeForSKU(size)}-${convertColorForSKu(color)}`,
+          weight: weight,
           weight_unit: "g",
           requires_shipping: true,
           inventory_policy: "continue",
           cost: cost,
-          fulfillment_service: is_pod ? "manual" : "biglypod-solutions",
+          fulfillment_service: is_pod ? "manual" : "biglypod-fulfillment",
         } as ShopifyVariants);
-      });
-    });
+      }
+    }
   }
 
   return variants;
@@ -157,4 +174,106 @@ export const createShopifyProductPayload = (
       images: images,
     },
   } as ShopifyProductPayload;
+};
+
+/**
+ * Calculates the cost for a Shopify variant based on various factors.
+ *
+ * @param {boolean} is_shirt - Indicates whether the product is a shirt.
+ * @param {Variant} el - The variant data.
+ * @returns {number} The calculated cost for the variant.
+ */
+export const calculateShopifyVariantWeight = (
+  is_shirt: boolean,
+  size: MockupSizeTypes,
+) => {
+  let weight =
+    is_shirt && size == "SMALL"
+      ? 113.4
+      : is_shirt && size == "MEDIUM"
+      ? 127.6
+      : is_shirt && size == "LARGE"
+      ? 153.1
+      : is_shirt && size == "XL"
+      ? 170.1
+      : is_shirt && size == "2XL"
+      ? 192.8
+      : is_shirt && size == "3XL"
+      ? 209.8
+      : is_shirt && size == "4XL"
+      ? 224.0
+      : is_shirt && size == "5XL"
+      ? 252.3
+      : !is_shirt && size == "SMALL"
+      ? 453.6
+      : !is_shirt && size == "MEDIUM"
+      ? 518.8
+      : !is_shirt && size == "LARGE"
+      ? 544.3
+      : !is_shirt && size == "XL"
+      ? 598.2
+      : !is_shirt && size == "2XL"
+      ? 623.7
+      : !is_shirt && size == "3XL"
+      ? 691.7
+      : !is_shirt && size == "4XL"
+      ? 733.2
+      : !is_shirt && size == "5XL"
+      ? 779.3
+      : !is_shirt
+      ? 453.6
+      : 113.4;
+
+  return weight;
+};
+
+/**
+ * Calculates the cost for a Shopify variant based on various factors.
+ *
+ * @param {boolean} is_shirt - Indicates whether the product is a shirt.
+ * @param {boolean} has_sleeve - Indicates whether the product has a sleeve.
+ * @param {boolean} has_back - Indicates whether the product has a back design.
+ * @param {Variant} el - The variant data.
+ * @param {ProductDocument} product_data - The product data.
+ * @returns {number} The calculated cost for the variant.
+ */
+export const calculateShopifyVariantCost = (
+  is_shirt: boolean,
+  has_sleeve: boolean,
+  has_front: boolean,
+  has_back: boolean,
+  color: string,
+) => {
+  let cost =
+    is_shirt && color == "2XL"
+      ? 13.0
+      : is_shirt && color == "3XL"
+      ? 15.0
+      : is_shirt && color == "4XL"
+      ? 17.0
+      : is_shirt && color == "5XL"
+      ? 19.0
+      : !is_shirt && color == "2XL"
+      ? 22.0
+      : !is_shirt && color == "3XL"
+      ? 24.0
+      : !is_shirt && color == "4XL"
+      ? 26.0
+      : !is_shirt && color == "5XL"
+      ? 28.0
+      : !is_shirt
+      ? 20.0
+      : 11.0;
+
+  if (has_front) {
+    cost = Number(cost) + Number(1.25);
+  }
+  if (has_sleeve) {
+    cost = Number(cost) + Number(1.25);
+  }
+  if (has_back) {
+    cost = Number(cost) + Number(1.25);
+  }
+
+  return cost;
 };

@@ -99,7 +99,7 @@ export const createPodOrderPayload = (
       shipping_lines: shippingLines,
       shipping_address: customer.shipping_address,
     },
-    fulfillment_status: "DEACTIVE",
+    fulfillment_status: "PENDING",
     tracking_number: "",
     pod_created: false,
     created_at: currentTime,

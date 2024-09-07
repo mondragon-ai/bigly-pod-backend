@@ -22,7 +22,6 @@ export const podFulfilled = functions
   .onPublish(async (message) => {
     const decoded = decodeBase64(message.data);
     const order = JSON.parse(decoded) as ShopifyPubSubOrder;
-    functions.logger.info({order});
 
     const {tags} = order;
     const {id: merchant_order_id, domain} = extractIdAndDomain(tags);
@@ -44,20 +43,25 @@ export const podFulfilled = functions
     if (!merchant_order) return;
 
     let tracking = "";
+    let fulfillment_order_id = "";
     if (!merchant_order.is_wholesale) {
-      tracking = await handlePODFulfillmentPubSub(
+      const fulfillment = await handlePODFulfillmentPubSub(
         order,
         merchant_order,
         domain,
         merchant_order_id,
       );
+      tracking = fulfillment.tracking;
+      fulfillment_order_id = fulfillment.fulfillment_order_id;
     } else {
       tracking = order.fulfillments[0]?.tracking_url || "";
+      fulfillment_order_id = "ACTIVE";
     }
 
     // Update Object
     merchant_order.tracking_number = tracking ? tracking : "";
-    merchant_order.fulfillment_status = "ACTIVE";
+    merchant_order.fulfillment_status =
+      fulfillment_order_id !== "" ? "ACTIVE" : "CANCELLED";
     await updateSubcollectionDocument(
       "shopify_pod",
       domain,
@@ -79,19 +83,17 @@ export const podFulfilled = functions
  * @returns
  */
 function extractIdAndDomain(inputString: string) {
-  console.log({tags: inputString});
   const items = inputString.split(",");
-  const numberRegex = /\d+/;
 
   let id = "";
   let domain = "";
 
   items.forEach((item) => {
     const trimmedItem = item.trim();
-    if (numberRegex.test(trimmedItem)) {
-      id = trimmedItem.match(numberRegex)![0];
-    } else {
+    if (inputString.includes("shopify")) {
       domain = trimmedItem;
+    } else {
+      id = trimmedItem;
     }
   });
 

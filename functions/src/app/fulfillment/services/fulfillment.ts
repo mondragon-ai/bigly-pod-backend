@@ -63,7 +63,7 @@ export const handlePODFulfillment = async (
  * @param {string} shop - The Shopify shop name.
  * @returns {Promise<void>} A promise that resolves when the request is sent.
  */
-const sendFulfillmentRequest = async (
+export const sendFulfillmentRequest = async (
   fulfillment_id: string | number,
   access_token: string,
   shop: string,
@@ -85,7 +85,7 @@ const sendFulfillmentRequest = async (
  * @param {string} shop - The Shopify shop name.
  * @returns {Promise<void>} A promise that resolves when the request is accepted.
  */
-const acceptFulfillmentRequest = async (
+export const acceptFulfillmentRequest = async (
   fulfillment_id: string | number,
   access_token: string,
   shop: string,

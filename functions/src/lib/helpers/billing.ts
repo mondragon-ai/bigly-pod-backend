@@ -41,7 +41,7 @@ export const updateMerchantUsage = async (
     shop,
     token,
     totalCost,
-    "Usage charges apply per hat sold that is generated using the mockup from the app, starting at $35 per hat.",
+    "Usage charges apply per item sold that is generated using the mockup from the app, starting at $11.",
   );
 };
 
@@ -75,7 +75,7 @@ export const billingConfig: {[key: string]: BillingPlan} = {
     currencyCode: "USD",
     interval: "USAGE",
     terms:
-      "Usage charges apply per hat sold that is generated using the mockup from the app, starting at $35 per hat.",
+      "Usage charges apply per item sold that is generated using the mockup from the app, starting at $11.",
   },
 };
 

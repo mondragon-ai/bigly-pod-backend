@@ -11,7 +11,7 @@ export type ShopifyVariants = {
   requires_shipping: boolean;
   inventory_policy: "continue" | null;
   cost: number;
-  fulfillment_service: "manual" | "biglypod-solutions";
+  fulfillment_service: "manual" | "biglypod-fulfillment";
 };
 
 export type ShopifyProductImages = {
@@ -66,7 +66,7 @@ export type ShopifyVariant = {
   requires_shipping: boolean;
   inventory_policy: "continue" | null;
   cost: number;
-  fulfillment_service: "manual" | "biglypod-solutions";
+  fulfillment_service: "manual" | "biglypod-fulfillment";
   product_id: number;
   position: number;
   compare_at_price: string | null;

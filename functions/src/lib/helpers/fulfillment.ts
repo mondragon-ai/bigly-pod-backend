@@ -1,11 +1,15 @@
 import {ShopifyPubSubOrder} from "../types/shopify/orders";
-import {shopifyRequest} from "../../networking/shopify";
+import {shopifyGraphQlRequest, shopifyRequest} from "../../networking/shopify";
 import {decryptMsg} from "../../utils/encryption";
 import {OrderDocument} from "../types/orders";
 import {
   FulfillmentOrderResponse,
   ShopifyFulfillment,
 } from "../types/shopify/fulfillment";
+import {
+  acceptFulfillmentRequest,
+  sendFulfillmentRequest,
+} from "../../app/fulfillment/services/fulfillment";
 
 /**
  * Handles POD (Print-on-Demand) order fulfillment for a specific merchant order.
@@ -21,18 +25,20 @@ export const handlePODFulfillmentPubSub = async (
   merchant_order: OrderDocument,
   domain: string,
   merchant_order_id: string,
-): Promise<string> => {
+): Promise<{tracking: string; fulfillment_order_id: string}> => {
   const shop = domain.split(".")[0];
   const token = await decryptMsg(merchant_order.access_token);
+  const tracking = order.fulfillments[0]?.tracking_url || "";
 
-  let fulfillment_order_id = merchant_order.fulfillment_id;
-  if (!fulfillment_order_id) {
-    fulfillment_order_id = await getFulfillmentID(
-      merchant_order_id,
-      Number(merchant_order.location_id),
-      shop,
-      token,
-    );
+  const fulfillment_order_id = await getFulfillmentID(
+    merchant_order_id,
+    Number(merchant_order.location_id),
+    shop,
+    token,
+  );
+
+  if (fulfillment_order_id === "") {
+    return {tracking: tracking, fulfillment_order_id: ""};
   }
 
   const fulfillment_id = await fulfillShopifyOrder(
@@ -42,7 +48,6 @@ export const handlePODFulfillmentPubSub = async (
     token,
   );
 
-  const tracking = order.fulfillments[0]?.tracking_url || "";
   if (tracking) {
     const {tracking_number, tracking_company, tracking_url} =
       order.fulfillments[0];
@@ -56,7 +61,7 @@ export const handlePODFulfillmentPubSub = async (
     );
   }
 
-  return tracking;
+  return {tracking: tracking, fulfillment_order_id: fulfillment_order_id};
 };
 
 /**
@@ -82,11 +87,66 @@ export const getFulfillmentID = async (
     shop,
   )) as FulfillmentOrderResponse;
 
-  const fulfillmentOrder = fulfillment.fulfillment_orders.find(
+  let fulfillment_id = "";
+  const fulfillmentOrder = fulfillment.fulfillment_orders.filter(
     (order) => order.assigned_location_id === location_id,
   );
 
-  return fulfillmentOrder ? String(fulfillmentOrder.id) : "";
+  if (!fulfillmentOrder || fulfillmentOrder.length == 0) {
+    return fulfillment_id;
+  }
+
+  const last_fulfillment = fulfillmentOrder[fulfillmentOrder.length - 1];
+  fulfillment_id = String(last_fulfillment.id);
+
+  if (last_fulfillment.request_status == "submitted") {
+    await acceptFulfillmentRequest(fulfillment_id, access_token, shop);
+  }
+
+  if (last_fulfillment.request_status == "unsubmitted") {
+    await sendFulfillmentRequest(fulfillment_id, access_token, shop);
+    await acceptFulfillmentRequest(fulfillment_id, access_token, shop);
+  }
+
+  if (last_fulfillment.request_status == "cancellation_requested") {
+    await fulfillmentOrderAcceptCancellationRequest(
+      shop,
+      access_token,
+      fulfillment_id,
+    );
+    fulfillment_id = "";
+  }
+
+  return fulfillment_id;
+};
+
+export const fulfillmentOrderAcceptCancellationRequest = async (
+  shop: string,
+  token: string,
+  fulfillment_id: string,
+) => {
+  const acceptCancellation = {
+    query: `
+      mutation fulfillmentOrderAcceptCancellationRequest($id: ID!) {
+        fulfillmentOrderAcceptCancellationRequest(id: $id) {
+          fulfillmentOrder {
+            id
+            status
+            requestStatus
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `,
+    variables: {
+      id: `gid://shopify/FulfillmentOrder/${fulfillment_id}`,
+    },
+  };
+
+  shopifyGraphQlRequest(shop, token, acceptCancellation);
 };
 
 /**
@@ -120,7 +180,8 @@ export const fulfillShopifyOrder = async (
     shop,
   )) as ShopifyFulfillment;
 
-  return Number(fulfillments.fulfillment.location_id) === location_id
+  return fulfillments &&
+    Number(fulfillments.fulfillment.location_id) === location_id
     ? String(fulfillments.fulfillment.id)
     : "";
 };
