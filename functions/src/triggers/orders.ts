@@ -51,7 +51,14 @@ export const orderCreated = functions.firestore
         is_wholesale,
       );
       console.log({capacityReached, createdRecord});
-      if (capacityReached || !createdRecord) return null;
+      if (capacityReached || !createdRecord) {
+        await updateOrderDocument(domain, id, {
+          ...order,
+          pod_created: false,
+          fulfillment_status: "BILLING",
+        });
+        return null;
+      }
 
       // Send order to POD
       const pod_order = await createPODOrder(shopify_order_payload);

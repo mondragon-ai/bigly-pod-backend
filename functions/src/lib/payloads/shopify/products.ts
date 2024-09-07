@@ -187,7 +187,8 @@ export const calculateShopifyVariantWeight = (
   is_shirt: boolean,
   size: MockupSizeTypes,
 ) => {
-  let weight =
+  /* eslint-disable indent */
+  const weight =
     is_shirt && size == "SMALL"
       ? 113.4
       : is_shirt && size == "MEDIUM"
@@ -223,6 +224,7 @@ export const calculateShopifyVariantWeight = (
       : !is_shirt
       ? 453.6
       : 113.4;
+  /* eslint-enable indent */
 
   return weight;
 };
@@ -244,6 +246,7 @@ export const calculateShopifyVariantCost = (
   has_back: boolean,
   color: string,
 ) => {
+  /* eslint-disable indent */
   let cost =
     is_shirt && color == "2XL"
       ? 13.0
@@ -264,6 +267,7 @@ export const calculateShopifyVariantCost = (
       : !is_shirt
       ? 20.0
       : 11.0;
+  /* eslint-enable indent */
 
   if (has_front) {
     cost = Number(cost) + Number(1.25);
