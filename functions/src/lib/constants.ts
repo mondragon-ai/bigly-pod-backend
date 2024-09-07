@@ -21,8 +21,8 @@ export const RESIZE_DIMENSIONS: DIMENSIONS = {
   },
   hoodie_lane_7: {
     FRONT: {
-      width: 3.8,
-      height: 3.8,
+      width: 3.85,
+      height: 3.85,
       top: 720,
       left: 550,
       top_m: 3.95,
@@ -34,7 +34,7 @@ export const RESIZE_DIMENSIONS: DIMENSIONS = {
       top: 720,
       left: 530,
       top_m: 3.95,
-      left_m: 4.5,
+      left_m: 4.8,
     },
   },
 };

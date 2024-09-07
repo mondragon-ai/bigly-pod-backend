@@ -23,14 +23,14 @@ export const createWebhooksAndGetId = async (
       access_token,
       shop,
       "orders/create",
-      "pubsub://only-caps:pod-order-complete",
+      "pubsub://pod-bigly:pod-order-complete",
     );
 
     const shop_update_id = await createWebhook(
       access_token,
       shop,
       "shop/update",
-      "pubsub://only-caps:shop-update",
+      "pubsub://pod-bigly:shop-update",
     );
 
     return {

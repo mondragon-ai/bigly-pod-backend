@@ -83,7 +83,7 @@ const initializeFulfillmentService = async (
     fulfillment_service: {
       name: "BiglyPOD Solutions",
       callback_url:
-        "https://us-central1-only-caps.cloudfunctions.net/fulfillment/fulfillment_order_notification",
+        "https://us-central1-pod-bigly.cloudfunctions.net/fulfillment/fulfillment_order_notification",
       inventory_management: false,
       permits_sku_sharing: true,
       fulfillment_orders_opt_in: true,

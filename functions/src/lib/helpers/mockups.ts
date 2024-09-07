@@ -136,6 +136,7 @@ async function fetchAndResizeDesign(
       throw new Error("Failed to fetch design image");
     }
 
+    /* eslint-disable operator-linebreak */
     const designBuffer = Buffer.from(await designResponse.arrayBuffer());
     const resizedDesignBuffer = await sharp(designBuffer)
       .resize(
@@ -148,7 +149,7 @@ async function fetchAndResizeDesign(
         ),
       )
       .toBuffer();
-
+    /* eslint-enable operator-linebreak */
     return [
       {
         input: resizedDesignBuffer,
@@ -181,6 +182,7 @@ function calculateOffset(
   type: MockupTypes,
 ): number {
   const baseOffset = sleeveSide === "LEFT" ? 75 : 1515;
+  /* eslint-disable operator-linebreak */
   return (
     baseOffset +
     Math.round(
@@ -188,6 +190,7 @@ function calculateOffset(
         RESIZE_DIMENSIONS[type].FRONT.width,
     )
   );
+  /* eslint-enable operator-linebreak */
 }
 
 /**
@@ -214,6 +217,7 @@ export const fetchAndResizeSleeveDesign = async (design: MockupRequestBody) => {
     const imageBuffer = await response.arrayBuffer();
     const designImage = sharp(Buffer.from(imageBuffer));
 
+    /* eslint-disable operator-linebreak */
     const rotationAngle = sleeve_side === "LEFT" ? 27 : -28;
     const sleeveResizedDesignBuffer = await designImage
       .resize(
@@ -234,6 +238,7 @@ export const fetchAndResizeSleeveDesign = async (design: MockupRequestBody) => {
         ((50 - dimension.resized_height_sleeve) / 2) *
           RESIZE_DIMENSIONS[type].FRONT.width,
       );
+    /* eslint-enable operator-linebreak */
 
     return {
       input: sleeveResizedDesignBuffer,
@@ -333,7 +338,7 @@ async function uploadMockupsToGCP(
   const newFileName = `${Date.now()}.png`;
   const fileUpload = admin
     .storage()
-    .bucket("only-caps.appspot.com")
+    .bucket("pod-bigly.appspot.com")
     .file(`${domain}/mockup/${newFileName}`);
 
   const blobStream = fileUpload.createWriteStream({

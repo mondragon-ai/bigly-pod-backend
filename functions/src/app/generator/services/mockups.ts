@@ -72,7 +72,7 @@ export async function processDesign(
 
     let front: MockupUrls[] = [];
     let back: MockupUrls[] = [];
-    for (var side of design.sides) {
+    for (const side of design.sides) {
       if (side === "FRONT") {
         front = await handleMockupGenorator(side);
       } else {
