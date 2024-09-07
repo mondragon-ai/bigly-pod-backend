@@ -15,18 +15,13 @@ export const handleMockupGenerator = async (
 ) => {
   const design = req.body as MockupRequestBody;
   const {domain, shpat} = req.params;
-  functions.logger.info(" 🎨 [MOCKUPS] - Handle Mockups");
-
-  console.log({domain, shpat});
-  console.log({design});
+  functions.logger.info(" 🎨 [GENRATE] - Handle Mockup ");
 
   const {status, text, mockups, error} = await processDesign(
     design,
     domain,
     shpat,
   );
-  console.log({status, text, error});
-  console.log({mockups});
 
   res.status(status).json({text, mockups, error});
 };

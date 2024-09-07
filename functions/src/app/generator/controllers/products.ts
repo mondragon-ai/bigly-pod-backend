@@ -14,7 +14,7 @@ export const handleProductCreate = async (
 ) => {
   const {domain, shpat} = req.params;
   const design_id = req.body.design_id;
-  functions.logger.info(" 🛒 [PRODUCT] - " + design_id);
+  functions.logger.info(" 🛒 [GENERATE] - " + design_id);
 
   const {status, text, result, error} = await processProduct(
     design_id,

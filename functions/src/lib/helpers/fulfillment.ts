@@ -1,5 +1,5 @@
-import {ShopifyPubSubOrder} from "../types/shopify/orders";
 import {shopifyGraphQlRequest, shopifyRequest} from "../../networking/shopify";
+import {ShopifyPubSubOrder} from "../types/shopify/orders";
 import {decryptMsg} from "../../utils/encryption";
 import {OrderDocument} from "../types/orders";
 import {

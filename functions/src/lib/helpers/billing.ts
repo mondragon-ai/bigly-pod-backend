@@ -203,8 +203,6 @@ async function attemptCreateUsageRecord(
       },
     };
 
-    functions.logger.info({createUsageRecordMutation});
-
     const repsonse = (await shopifyGraphQlRequest(
       shop,
       access_token,

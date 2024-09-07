@@ -65,7 +65,7 @@ export const generateShopifyProductVariants = (
           has_sleeve,
           has_front,
           has_back,
-          color,
+          size,
         );
         variants.push({
           option1: size || "",
@@ -235,8 +235,6 @@ export const calculateShopifyVariantWeight = (
  * @param {boolean} is_shirt - Indicates whether the product is a shirt.
  * @param {boolean} has_sleeve - Indicates whether the product has a sleeve.
  * @param {boolean} has_back - Indicates whether the product has a back design.
- * @param {Variant} el - The variant data.
- * @param {ProductDocument} product_data - The product data.
  * @returns {number} The calculated cost for the variant.
  */
 export const calculateShopifyVariantCost = (
@@ -244,25 +242,25 @@ export const calculateShopifyVariantCost = (
   has_sleeve: boolean,
   has_front: boolean,
   has_back: boolean,
-  color: string,
+  size: string,
 ) => {
   /* eslint-disable indent */
   let cost =
-    is_shirt && color == "2XL"
+    is_shirt && size == "2XL"
       ? 13.0
-      : is_shirt && color == "3XL"
+      : is_shirt && size == "3XL"
       ? 15.0
-      : is_shirt && color == "4XL"
+      : is_shirt && size == "4XL"
       ? 17.0
-      : is_shirt && color == "5XL"
+      : is_shirt && size == "5XL"
       ? 19.0
-      : !is_shirt && color == "2XL"
+      : !is_shirt && size == "2XL"
       ? 22.0
-      : !is_shirt && color == "3XL"
+      : !is_shirt && size == "3XL"
       ? 24.0
-      : !is_shirt && color == "4XL"
+      : !is_shirt && size == "4XL"
       ? 26.0
-      : !is_shirt && color == "5XL"
+      : !is_shirt && size == "5XL"
       ? 28.0
       : !is_shirt
       ? 20.0

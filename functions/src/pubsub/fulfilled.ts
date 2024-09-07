@@ -41,6 +41,7 @@ export const podFulfilled = functions
 
     const merchant_order = data as OrderDocument;
     if (!merchant_order) return;
+    functions.logger.info({merchant_order});
 
     let tracking = "";
     let fulfillment_order_id = "";
@@ -83,6 +84,7 @@ export const podFulfilled = functions
  * @returns
  */
 function extractIdAndDomain(inputString: string) {
+  console.log({tags: inputString});
   const items = inputString.split(",");
 
   let id = "";
@@ -90,7 +92,7 @@ function extractIdAndDomain(inputString: string) {
 
   items.forEach((item) => {
     const trimmedItem = item.trim();
-    if (inputString.includes("shopify")) {
+    if (trimmedItem.includes("myshopify")) {
       domain = trimmedItem;
     } else {
       id = trimmedItem;

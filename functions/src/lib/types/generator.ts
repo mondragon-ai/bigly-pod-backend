@@ -9,7 +9,6 @@ export type MockupRequestBody = {
   created_at: FirebaseFirestore.Timestamp;
   updated_at: FirebaseFirestore.Timestamp;
   mockups: string[];
-  resized_design: string;
   design_urls: {
     front: string;
     back: string;

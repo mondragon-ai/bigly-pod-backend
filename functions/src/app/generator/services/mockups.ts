@@ -54,7 +54,6 @@ export async function processDesign(
     ): Promise<{url: string; alt: string}[]> => {
       const mockups = await Promise.all(
         design.colors.map(async (color) => {
-          console.log({START: side, COLOR: color});
           return await generateMockups(
             design,
             color.toLowerCase(),
@@ -117,11 +116,11 @@ export async function processDesign(
       ok: status < 300,
       text:
         status < 300
-          ? "🎉 [SUCCESS]: Design successfully uploaded"
-          : " 🚨 [ERROR]: Problems fetching images & saving design",
+          ? "🎉 [SUCCESS]: Mockup successfully created"
+          : " 🚨 [ERROR]: Problems creating/saving mockup",
       mockups:
         status < 300 ? {urls: {front, back}, design_id: payload.id} : null,
-      error: true,
+      error: false,
     };
   } catch (error) {
     // Log and handle unexpected errors

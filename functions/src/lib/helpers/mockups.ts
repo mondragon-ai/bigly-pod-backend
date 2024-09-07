@@ -100,7 +100,6 @@ async function fetchBlankImage(
   try {
     const mockup_url =
       apparel_blanks[type][side.toLocaleLowerCase()][color.toLocaleUpperCase()];
-    console.log({mockup_url});
     const response = await fetch(mockup_url);
     if (!response.ok) {
       throw new Error(
