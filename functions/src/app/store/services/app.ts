@@ -154,10 +154,10 @@ const handleMerchantNotInstalled = async (
   const fulfillment = await createFulfillmentService(shop, shpat);
   const payload = merchantPayload(token, webhooks, store, fulfillment);
 
-  await createRootDocument("domain_map", domain, {
+  await createRootDocument("domain_map", store.domain, {
     myshopify_domain: store.myshopify_domain,
     custom_domain: store.domain,
-    id: domain,
+    id: store.domain,
   });
 
   const {status, text} = await createRootDocument(

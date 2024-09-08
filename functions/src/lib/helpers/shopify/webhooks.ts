@@ -111,6 +111,7 @@ const fetchWebhooks = async (
       access_token,
       shop,
     );
+    /* eslint-disable operator-linebreak */
     const whData = response as WebhooksResponse;
     for (const wh of whData.webhooks) {
       if (
@@ -124,6 +125,7 @@ const fetchWebhooks = async (
         webhook.shop = Number(wh.id);
       }
     }
+    /* eslint-enable operator-linebreak */
     return webhook;
   } catch (error) {
     console.error("Error fetching webhooks", error);

@@ -10,6 +10,7 @@ import {ShopifyMerchant} from "../types/merchants";
 export const fetchMerchant = async (
   order_status_url: string,
 ): Promise<{merchant: ShopifyMerchant | null; domain: string}> => {
+  console.log({order_status_url});
   const shop = order_status_url.replace("https://", "");
   const domains = [`${shop.split(".")[0]}.myshopify.com`, shop.split("/")[0]];
   let doc_id = "";
