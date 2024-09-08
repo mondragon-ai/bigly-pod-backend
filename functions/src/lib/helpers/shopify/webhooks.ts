@@ -1,7 +1,10 @@
 import {decryptMsg} from "../../../utils/encryption";
 import {ShopifyMerchant} from "../../types/merchants";
 import {shopifyRequest} from "../../../networking/shopify";
-import {WebhookSubscriptionData} from "../../types/shopify/webhooks";
+import {
+  WebhooksResponse,
+  WebhookSubscriptionData,
+} from "../../types/shopify/webhooks";
 
 /**
  * Creates a Shopify webhook and returns its ID based on the provided access token and shop.
@@ -19,19 +22,25 @@ export const createWebhooksAndGetId = async (
   order: number;
 }> => {
   try {
-    const complete_order_id = await createWebhook(
+    let complete_order_id = await createWebhook(
       access_token,
       shop,
       "orders/create",
       "pubsub://pod-bigly:pod-order-complete",
     );
 
-    const shop_update_id = await createWebhook(
+    let shop_update_id = await createWebhook(
       access_token,
       shop,
       "shop/update",
       "pubsub://pod-bigly:shop-update",
     );
+
+    if (complete_order_id === 0 || shop_update_id === 0) {
+      const {shop: shop_id, order} = await fetchWebhooks(access_token, shop);
+      complete_order_id = order;
+      shop_update_id = shop_id;
+    }
 
     return {
       shop: Number(shop_update_id),
@@ -80,6 +89,45 @@ const createWebhook = async (
   } catch (error) {
     console.error(`Error creating webhook for topic ${topic}:`, error);
     throw new Error(`Failed to create webhook for topic ${topic}`);
+  }
+};
+
+const fetchWebhooks = async (
+  access_token: string,
+  shop: string,
+): Promise<{
+  shop: number;
+  order: number;
+}> => {
+  const webhook = {
+    shop: 0,
+    order: 0,
+  };
+  try {
+    const response = await shopifyRequest(
+      "webhooks.json",
+      "GET",
+      null,
+      access_token,
+      shop,
+    );
+    const whData = response as WebhooksResponse;
+    for (const wh of whData.webhooks) {
+      if (
+        wh.address.toLocaleLowerCase() ===
+        "pubsub://pod-bigly:pod-order-complete"
+      ) {
+        webhook.order = Number(wh.id);
+      }
+
+      if (wh.address.toLocaleLowerCase() === "pubsub://pod-bigly:shop-update") {
+        webhook.shop = Number(wh.id);
+      }
+    }
+    return webhook;
+  } catch (error) {
+    console.error("Error fetching webhooks", error);
+    return webhook;
   }
 };
 
