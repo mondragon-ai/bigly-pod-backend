@@ -104,7 +104,7 @@ export const orderCreated = functions.firestore
  * @param {string | number} location_id - The location ID for fulfillment.
  * @returns {Promise<string>} A promise that resolves to the fulfillment ID.
  */
-async function processFulfillment(
+export async function processFulfillment(
   access_token: string,
   myshopify_domain: string,
   order_id: string,
@@ -123,7 +123,7 @@ async function processFulfillment(
  * @param {Partial<OrderDocument>} updatedData - The updated order data.
  * @returns {Promise<void>} A promise that resolves when the document is updated.
  */
-async function updateOrderDocument(
+export async function updateOrderDocument(
   domain: string,
   orderId: string,
   updatedData: Partial<OrderDocument>,

@@ -125,6 +125,8 @@ export async function createUsageRecord(
       planDescription,
     );
 
+    // console.log({subscriptionLineItem});
+
     if (!subscriptionLineItem) {
       return {capacityReached: false, createdRecord: false};
     }
@@ -202,6 +204,7 @@ async function attemptCreateUsageRecord(
         subscriptionLineItemId: subscriptionLineItem.id,
       },
     };
+    // console.log({createUsageRecordMutation});
 
     const repsonse = (await shopifyGraphQlRequest(
       shop,
@@ -244,7 +247,11 @@ export async function getAppSubscription(
       .activeSubscriptions) {
       if (subscription.name === "Pay As You Go") {
         for (const lineItem of subscription.lineItems) {
-          if (lineItem.plan.pricingDetails.terms === planDescription) {
+          if (
+            lineItem.plan.pricingDetails.terms === planDescription ||
+            lineItem.plan.pricingDetails.terms ===
+              "Between $10.50 and 16.75 per mockup\n"
+          ) {
             return {
               id: lineItem.id,
               balanceUsed: parseFloat(

@@ -1,6 +1,7 @@
 import * as express from "express";
 import * as functions from "firebase-functions";
 import {
+  chargeAndFulfillOrder,
   deleteOrders,
   fetchNextOrderList,
   fetchOrders,
@@ -61,6 +62,28 @@ export const handleDeleteOrder = async (
   );
 
   return res.status(status < 300 ? 204 : status).json({text, error});
+};
+
+/**
+ * Charge & fulfill an order for the store
+ *
+ * @param {express.Request} req - The request object.
+ * @param {express.Response} res - The response object.
+ */
+export const handleOrderFulfill = async (
+  req: express.Request,
+  res: express.Response,
+) => {
+  const {id} = req.query;
+  const {domain} = req.params;
+
+  const order_id = id && typeof id === "string" ? id : "";
+
+  functions.logger.info(" 💰 [/CHARGE]: " + order_id + ` for ${domain}`);
+
+  const {status, text, error} = await chargeAndFulfillOrder(domain, order_id);
+
+  return res.status(status).json({text, error});
 };
 
 /**

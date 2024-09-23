@@ -6,6 +6,13 @@ import {
   fetchSubcollectionDocument,
 } from "../../../database/firestore";
 import {fetchMerchantFromDB} from "../../../database/merchant";
+import {
+  updateDailyAnalytics,
+  updateMonthlyAnalytics,
+} from "../../../lib/helpers/analytics";
+import {updateMerchantUsage} from "../../../lib/helpers/billing";
+import {createPODOrder} from "../../../lib/helpers/orders";
+
 import {generateShippingRates} from "../../../lib/helpers/shipengine";
 import {createShopifyCustomer} from "../../../lib/helpers/shopify/customers";
 import {
@@ -13,10 +20,14 @@ import {
   buildPODLineItemPayload,
   createOrderPayload,
 } from "../../../lib/payloads/orders";
-import {CustomerWholesale} from "../../../lib/types/orders";
+import {CustomerWholesale, OrderDocument} from "../../../lib/types/orders";
 import {ProductDocument} from "../../../lib/types/products";
 import {ServicesReponseType} from "../../../lib/types/shared";
 import {ShopifyPubSubOrder} from "../../../lib/types/shopify/orders";
+import {
+  processFulfillment,
+  updateOrderDocument,
+} from "../../../triggers/orders";
 import {createErrorResponse} from "../../../utils/errors";
 
 /**
@@ -304,4 +315,103 @@ export const processWholesale = async (
   } catch (error) {
     return createErrorResponse(500, "Internal Server");
   }
+};
+
+export const chargeAndFulfillOrder = async (
+  domain: string,
+  order_id: string,
+): Promise<ServicesReponseType> => {
+  const res: ServicesReponseType = {
+    status: 200,
+    data: [],
+    error: false,
+    text: "Orders Fetched Sucessfully",
+  };
+
+  if (!order_id || !domain) {
+    res.error = true;
+    res.status = 400;
+    res.text = "Missing paramaters";
+  }
+
+  // Get Merchant Document from POD Order
+  const {data} = await fetchSubcollectionDocument(
+    "shopify_pod",
+    domain,
+    "orders",
+    order_id,
+  );
+
+  const merchant_order = data as OrderDocument;
+  if (!merchant_order) {
+    res.error = true;
+    res.status = 400;
+    res.text = "Couldn't fetch order";
+    return res;
+  }
+  const {
+    access_token,
+    pod_line_items,
+    myshopify_domain,
+    shipping_rate,
+    is_wholesale,
+    shopify_order_payload,
+    location_id,
+  } = merchant_order;
+
+  // Update Merchant Usage
+  const {capacityReached, createdRecord} = await updateMerchantUsage(
+    access_token,
+    pod_line_items,
+    myshopify_domain,
+    shipping_rate,
+    is_wholesale,
+  );
+  console.log({capacityReached, createdRecord});
+
+  if (capacityReached || !createdRecord) {
+    await updateOrderDocument(domain, order_id, {
+      ...merchant_order,
+      pod_created: false,
+      fulfillment_status: "BILLING",
+    });
+    res.error = true;
+    res.status = 422;
+    res.text = "Couldn't charge merchant";
+    return res;
+  }
+
+  // Send order to POD
+  const pod_order = await createPODOrder(shopify_order_payload);
+  if (!pod_order) {
+    res.error = true;
+    res.status = 400;
+    res.text = "Couldn't POD payload";
+    return res;
+  }
+
+  let fulfillment_id = "" as string | null;
+  if (!is_wholesale) {
+    // Handle Fulfillment
+    fulfillment_id = await processFulfillment(
+      access_token,
+      myshopify_domain,
+      String(order_id),
+      location_id,
+    );
+  }
+
+  // Update Order Document
+  await updateOrderDocument(domain, order_id, {
+    ...merchant_order,
+    pod_created: true,
+    fulfillment_status: "PENDING",
+    fulfillment_id: String(fulfillment_id || ""),
+  });
+
+  await updateDailyAnalytics(merchant_order, domain);
+
+  await updateMonthlyAnalytics(merchant_order, domain);
+
+  return res;
 };
