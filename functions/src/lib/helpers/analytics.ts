@@ -7,7 +7,7 @@ import {
   getDayStartUnixTimeStampFromTimezone,
   getMonthStartUnixTimeStampFromTimezone,
 } from "../../utils/time";
-import {calculateTotalCost} from "./billing";
+import {calculateTotalRevenue} from "./billing";
 import {OrderDocument} from "../types/orders";
 import {AnalyticsProps} from "../types/analytics";
 
@@ -104,8 +104,7 @@ export const updateDailyAnalytics = async (
 
   // Add Price
   const total_revenue =
-    calculateTotalCost(pod_line_items, shipping_rate) + daily.total_revenue ||
-    0;
+    calculateTotalRevenue(pod_line_items) + daily.total_revenue || 0;
 
   // Add Item(s)
   const total_items = (pod_line_items || []).length + daily.total_items;
@@ -131,7 +130,7 @@ export const updateDailyAnalytics = async (
     id: id,
     created_at: current_time,
     total_items: (pod_line_items || []).length,
-    total_price: Number(calculateTotalCost(pod_line_items, shipping_rate) || 0),
+    total_price: Number(calculateTotalRevenue(pod_line_items) || 0),
     fulfilled_date: 0,
     fulfilled_time: 0,
     shipping_cost: Number(shipping_rate + 2),
@@ -191,7 +190,7 @@ export const updateMonthlyAnalytics = async (
 
   // Add Price
   const total_revenue =
-    calculateTotalCost(pod_line_items, shipping_rate) + monthly.total_revenue;
+    calculateTotalRevenue(pod_line_items) + monthly.total_revenue;
 
   // Add Item(s)
   const total_items = (pod_line_items || []).length + monthly.total_items;
@@ -217,7 +216,7 @@ export const updateMonthlyAnalytics = async (
     id: id,
     created_at: current_time,
     total_items: (pod_line_items || []).length,
-    total_price: Number(calculateTotalCost(pod_line_items, shipping_rate) || 0),
+    total_price: Number(calculateTotalRevenue(pod_line_items) || 0),
     fulfilled_date: 0,
     fulfilled_time: 0,
     shipping_cost: Number(shipping_rate + 2),

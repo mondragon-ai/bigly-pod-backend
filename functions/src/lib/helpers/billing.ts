@@ -62,6 +62,20 @@ export function calculateTotalCost(
   );
 }
 
+/**
+ * Calculates the total cost based on line items and shipping rate.
+ *
+ * @param {Array<{ variant_id: string; quantity: number; weight: number; cost: number }>} line_items - An array of line items.
+ * @param {number} shipping_rate - The shipping rate.
+ * @returns {number} The total calculated cost.
+ */
+export function calculateTotalRevenue(line_items: PODLineItemsProps[]): number {
+  return line_items.reduce((total, item) => {
+    const gross = Number(item.price) * Number(item.quantity);
+    return total + Number(gross);
+  }, 0);
+}
+
 interface BillingPlan {
   amount: number;
   currencyCode: string;
@@ -243,6 +257,7 @@ export async function getAppSubscription(
       HAS_PAYMENTS_QUERY,
     );
 
+    /* eslint-disable operator-linebreak */
     for (const subscription of response.data.currentAppInstallation
       .activeSubscriptions) {
       if (subscription.name === "Pay As You Go") {
@@ -265,6 +280,7 @@ export async function getAppSubscription(
         }
       }
     }
+    /* eslint-enable operator-linebreak */
   } catch (error) {
     functions.logger.error("Error fetching app subscription:", error);
   }

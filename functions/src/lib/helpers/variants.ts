@@ -20,7 +20,7 @@ export const findVariantsInDB = async (
 
   /* eslint-disable indent */
   const map_line_items = lineItems.map(async (li) => {
-    const {product_id, variant_id, quantity, grams} = li;
+    const {product_id, variant_id, quantity, grams, price} = li;
 
     // Check if the product document exists in Firestore
     const {data} = await fetchSubcollectionDocument(
@@ -59,6 +59,7 @@ export const findVariantsInDB = async (
             weight: grams,
             type: productData.type,
             cost: vars.cost,
+            price: Number(price) || Number(Number(vars.cost) * 2.5),
             image:
               url && url !== ""
                 ? url

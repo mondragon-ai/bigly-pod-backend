@@ -53,6 +53,7 @@ export type PODLineItemsProps = {
   cost: number;
   image: string;
   type: MockupTypes;
+  price: number;
   merchant_variants_id: string | number;
 };
 

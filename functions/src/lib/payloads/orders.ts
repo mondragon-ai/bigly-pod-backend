@@ -215,6 +215,7 @@ export const buildPODLineItemPayload = (
     weight: 0,
     cost: 0,
     image: "",
+    price: 0,
     type: "hoodie_lane_7",
     merchant_variants_id: "",
   };
@@ -239,6 +240,7 @@ export const buildPODLineItemPayload = (
         weight: product.weight || 85,
         type: product.type,
         cost: Number(Number(vars.cost).toFixed(2)),
+        price: Number(Number(vars.cost * 2.5).toFixed(2)),
         image:
           url && url !== ""
             ? url
