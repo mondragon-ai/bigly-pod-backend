@@ -102,17 +102,21 @@ export const generateShopifyProductImageList = (
 
   // Helper function to push image data to imgs array
   const pushImage = (src: string, alt: string) => {
-    images.push({src, alt, id: Number(generateRandomID(""))});
+    images.push({src, alt, id: Number(generateRandomID("img_"))});
   };
 
   mockup.mockup_urls[mockup.front_is_main ? "front" : "back"].forEach((img) => {
     pushImage(img.url, img.alt);
   });
 
-  for (const design_url of Object.entries(mockup.design_urls)) {
-    if (design_url[1] !== "") {
-      pushImage(design_url[1], `${design_url[0]}_design`);
+  for (const [key, url] of Object.entries(mockup.design_urls)) {
+    if (url !== "") {
+      pushImage(url, `${key}_design`);
     }
+  }
+
+  if (mockup.front_is_main && mockup.mockup_urls.back.length > 0) {
+    pushImage(mockup.mockup_urls.back[0].url, mockup.mockup_urls.back[0].alt);
   }
 
   return images;
