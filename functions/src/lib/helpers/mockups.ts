@@ -140,11 +140,12 @@ async function fetchAndResizeDesign(
     const resizedDesignBuffer = await sharp(designBuffer)
       .resize(
         Math.round(
-          dimension[`resized_width_${s}`] * RESIZE_DIMENSIONS[type][side].width,
+          dimension[`resized_width_${s}`] *
+            (RESIZE_DIMENSIONS[type][side].width || 1),
         ),
         Math.round(
           dimension[`resized_height_${s}`] *
-            RESIZE_DIMENSIONS[type][side].height,
+            (RESIZE_DIMENSIONS[type][side].height || 1),
         ),
       )
       .toBuffer();
@@ -155,11 +156,11 @@ async function fetchAndResizeDesign(
         top:
           Math.round(
             position[`top_${s}`] * RESIZE_DIMENSIONS[type][side].top_m,
-          ) + RESIZE_DIMENSIONS[type][side].top,
+          ) + (RESIZE_DIMENSIONS[type][side].top || 1),
         left:
           Math.round(
             position[`left_${s}`] * RESIZE_DIMENSIONS[type][side].left_m,
-          ) + RESIZE_DIMENSIONS[type][side].left,
+          ) + (RESIZE_DIMENSIONS[type][side].left || 1),
       },
     ];
   } catch (error) {
